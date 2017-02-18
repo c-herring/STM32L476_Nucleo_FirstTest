@@ -54,11 +54,14 @@ int main(void)
 	HAL_GPIO_Init(GPIOC, &gpioinitstruct);
 
 	// Set the PA4 Pin as a gpio input
+	__HAL_RCC_GPIOA_CLK_ENABLE();
 	gpioinitstruct.Pin = GPIO_PIN_4;
-	gpioinitstruct.Mode = GPIO_MODE_IT_RISING;
-	gpioinitstruct.Pull   = GPIO_NOPULL;
-	gpioinitstruct.Speed  = GPIO_SPEED_FREQ_HIGH;
+	gpioinitstruct.Mode = GPIO_MODE_IT_FALLING;
+	gpioinitstruct.Pull   = GPIO_PULLDOWN;
 	HAL_GPIO_Init(GPIOA, &gpioinitstruct);
+	HAL_NVIC_SetPriority(EXTI4_IRQn, 2, 0);
+	HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
 
 	// Set PC10 pin as an output
 	gpioinitstruct.Pin = GPIO_PIN_10;
@@ -103,7 +106,7 @@ int main(void)
 		if (HAL_GetTick() - UART2stopwatch > UART_TRANSMIT_RATE)
 		{
 			sprintf(txbuff, "Hello, batman -- %d\t%lu\n\r", btn_pressed, BSP_PB_GetState(BUTTON_USER));
-			HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
+			HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 			UART2stopwatch = HAL_GetTick();
 
 		}
@@ -146,6 +149,7 @@ void USART2_UART_Init(void)
 	//NVIC_InitTypeDef nvicStructure;
 	//NVIC_Init();
 
+
 	// This is all pretty self explaining.
 	huart2.Instance = USART2;
 	huart2.Init.BaudRate = 115200;
@@ -172,7 +176,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 		// Enable the peripheral clock for PORTA GPIO
 		__GPIOA_CLK_ENABLE();
 		// Enable the clock associated with the UART2 peripheral
-		__USART2_CLK_ENABLE();
+		//__USART2_CLK_ENABLE();
+		__HAL_RCC_USART2_CLK_ENABLE();
 
 		// GPIO pins to be configured are 2 and 3. We want pullup pulldown mode
 		GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
@@ -185,18 +190,37 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
 		// Init
 		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+		HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
+		HAL_NVIC_EnableIRQ(USART2_IRQn);
 	}
 }
 
-void UART2_IRQHandler(void)
+void USART2_IRQHandler(void)
 {
-	multiplier = 2;
-	return;
+	HAL_UART_IRQHandler(&huart2);
 }
+
+void EXTI4_IRQHandler(void)
+{
+	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_4);
+	sprintf(txbuff, "Saw an interrupt..\n");
+	multiplier = 2;
+	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
+	/*
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
+
+	sprintf(txbuff, "Saw an interrupt!");
+	multiplier = 2;
+	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
+	HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);*/
+}
+/*
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	sprintf(txbuff, "Saw an interrupt");
+	sprintf(txbuff, "Saw an interrupt..\n");
 	multiplier = 2;
 	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
 }
+*/
