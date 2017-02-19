@@ -12,6 +12,7 @@
 #include "stm32l4xx.h"
 #include "stm32l4xx_nucleo.h"
 #include <string.h>
+#include "globals.h"
 
 // -------- Stuff that can be moved to header file later --------
 
@@ -19,15 +20,6 @@
 #define CORE_LED_DELAY 500
 // UART transmit rate
 #define UART_TRANSMIT_RATE 1000
-
-// Allocate space for a transmit buffer
-char txbuff[50];
-
-// Create the UART2 handle
-UART_HandleTypeDef huart2;
-
-// Function Declarations
-void USART2_UART_Init(void);
 
 // TEST CODE
 volatile int multiplier = 1;
@@ -39,40 +31,12 @@ int main(void)
 	// Init the HAL
 	HAL_Init();
 
-	// Initialize the on-board LED (On GPIOA Pin5)
-	BSP_LED_Init(LED2);
-
-	// Set the on-board user button as a GPIO input
-	BSP_PB_Init(BUTTON_USER, BUTTON_MODE_GPIO);
-
-	// Set the PC0 Pin as a gpio input
-	GPIO_InitTypeDef gpioinitstruct = {0};
-	gpioinitstruct.Pin = GPIO_PIN_0;
-	gpioinitstruct.Mode = GPIO_MODE_INPUT;
-	gpioinitstruct.Pull   = GPIO_NOPULL;
-	gpioinitstruct.Speed  = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(GPIOC, &gpioinitstruct);
-
-	// Set the PA4 Pin as a gpio input
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-	gpioinitstruct.Pin = GPIO_PIN_4;
-	gpioinitstruct.Mode = GPIO_MODE_IT_FALLING;
-	gpioinitstruct.Pull   = GPIO_PULLDOWN;
-	HAL_GPIO_Init(GPIOA, &gpioinitstruct);
-	HAL_NVIC_SetPriority(EXTI4_IRQn, 2, 0);
-	HAL_NVIC_EnableIRQ(EXTI4_IRQn);
-
-
-	// Set PC10 pin as an output
-	gpioinitstruct.Pin = GPIO_PIN_10;
-	gpioinitstruct.Mode = GPIO_MODE_OUTPUT_PP;
-	gpioinitstruct.Pull   = GPIO_NOPULL;
-	gpioinitstruct.Speed  = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(GPIOC, &gpioinitstruct);
-
+	// Init the GPIO
+	GPIO_Init();
 
 	// Init UART2
 	USART2_UART_Init();
+
 
 	// Delay to flash LED
 	uint32_t LED_Delay = CORE_LED_DELAY; //ms
@@ -105,8 +69,8 @@ int main(void)
 		// Periodically transmit UART message
 		if (HAL_GetTick() - UART2stopwatch > UART_TRANSMIT_RATE)
 		{
-			sprintf(txbuff, "Hello, batman -- %d\t%lu\n\r", btn_pressed, BSP_PB_GetState(BUTTON_USER));
-			HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
+			//sprintf(txbuff, "Hello, batman -- %d\t%lu\n\r", btn_pressed, BSP_PB_GetState(BUTTON_USER));
+			//HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 			UART2stopwatch = HAL_GetTick();
 
 		}
@@ -137,29 +101,7 @@ int main(void)
 	}
 }
 
-/*
- * Initialize UART
- */
-void USART2_UART_Init(void)
-{
-	// Enable interrupts
-	//__HAL_UART_ENABLE_IT(&huart2, UART_IT_TXE);
-	// Enable the USART2 global interrupt
-	//NVIC_EnableIRQ(USART2_IRQn);
-	//NVIC_InitTypeDef nvicStructure;
-	//NVIC_Init();
 
-
-	// This is all pretty self explaining.
-	huart2.Instance = USART2;
-	huart2.Init.BaudRate = 115200;
-	huart2.Init.WordLength = UART_WORDLENGTH_8B;
-	huart2.Init.StopBits = UART_STOPBITS_1;
-	huart2.Init.Parity = UART_PARITY_NONE;
-	huart2.Init.Mode = UART_MODE_TX_RX;
-	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	HAL_UART_Init(&huart2);
-}
 
 /*
  * This function is called from inside HAL_UART_Init
@@ -203,24 +145,28 @@ void USART2_IRQHandler(void)
 
 void EXTI4_IRQHandler(void)
 {
+	/*
 	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_4);
 	sprintf(txbuff, "Saw an interrupt..\n");
 	multiplier = 2;
 	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
-	/*
+	*/
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
-
+/*
 	sprintf(txbuff, "Saw an interrupt!");
 	multiplier = 2;
 	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
 	HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);*/
 }
-/*
+
+
+
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	sprintf(txbuff, "Saw an interrupt..\n");
+	//uint8_t M1_encAPin =
+	sprintf(txbuff, "Saw an interrupt in EXTI Callback..GPIOA_%d\n\r", GPIO_Pin);
 	multiplier = 2;
 	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
 }
-*/
+
