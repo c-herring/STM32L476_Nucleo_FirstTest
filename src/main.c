@@ -24,6 +24,8 @@
 // TEST CODE
 volatile int multiplier = 1;
 
+void TIM4_Init(void);
+
 // -------- END OF WOULD - BE HEADER --------
 
 int main(void)
@@ -37,6 +39,10 @@ int main(void)
 	// Init UART2
 	USART2_UART_Init();
 
+	// Init timer 4
+	TIM4_Init();
+	// Start the PWM
+	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 
 	// Delay to flash LED
 	uint32_t LED_Delay = CORE_LED_DELAY; //ms
@@ -169,4 +175,74 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	multiplier = 2;
 	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
 }
+
+/*
+ * Initialize timer4. Put PWM mode on pin PB6
+ */
+void TIM4_Init(void)
+{
+	// Create the configuration structures
+	TIM_MasterConfigTypeDef sMasterConfig;
+	TIM_OC_InitTypeDef sConfigOC;
+
+	// First init the timer. The RCC cloxk for timer 4 is done inside the HAL_TIM_PWM_MspInit callback. Why can't we just do that here?
+	htim4.Instance = TIM4;
+	htim4.Init.Prescaler = 0; //TODO timer_tick_frequency = Timer_default_frequency / (prescaller_set + 1)
+	htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+	// PWM_frequency = timer_tick_frequency / (TIM_Period + 1)
+	// TIM_Period = (timer_tick_frequency / PWM_frequency) - 1
+	// Assuming APB1 clock is running at 84MHZ, we have no prescaler. If this is true then we are targeting 10khz
+	// TIM_Period = 84000000 / 10000 - 1 = 8399
+	htim4.Init.Period = 8399;
+	htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	// Timer base is set in here:
+	if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+	{
+		//Error_Handler();
+	}
+
+
+
+	// TODO: What does all this do!?
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+	{
+		//Error_Handler();
+	}
+
+
+
+	// TODO: What does all this do?!
+	sConfigOC.OCMode = TIM_OCMODE_PWM1;
+	sConfigOC.Pulse = 4000;
+	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+	{
+		//Error_Handler();
+	}
+
+	// Now set the pin to use the timer
+	GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitStruct.Pin = GPIO_PIN_6;
+	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 

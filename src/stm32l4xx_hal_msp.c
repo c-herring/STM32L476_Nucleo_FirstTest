@@ -75,6 +75,7 @@ void GPIO_Init(void)
 {
 	// Enable GPIO clocks
 	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
 
 	// Initialize the on-board LED (On GPIOA Pin5)
 	BSP_LED_Init(LED2);
@@ -148,6 +149,14 @@ void USART2_UART_Init(void)
 	HAL_UART_Init(&huart2);
 }
 
-
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim_pwm)
+{
+	// Why is this done in here. Can't I just do this at the start of my timer init function?
+	if (htim_pwm->Instance == TIM4)
+	{
+		// Enable the TIM4 clock
+		__HAL_RCC_TIM4_CLK_ENABLE();
+	}
+}
 
 

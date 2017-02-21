@@ -11,6 +11,8 @@
 
 // Create the UART2 handle
 UART_HandleTypeDef huart2;
+// PWM timer handle
+TIM_HandleTypeDef htim4;
 
 
 // Allocate space for a transmit buffer
