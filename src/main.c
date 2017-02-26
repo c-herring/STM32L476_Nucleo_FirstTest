@@ -20,7 +20,7 @@
 #define CORE_LED_DELAY 1000
 // UART transmit rate
 #define UART_TRANSMIT_RATE 1000
-
+#define PWM_PERIOD 7999
 // TEST CODE
 volatile int multiplier = 1;
 
@@ -56,7 +56,8 @@ int main(void)
 	// Start the stopwatch
 	uint32_t LEDstopwatch = HAL_GetTick();
 	uint32_t UART2stopwatch = HAL_GetTick();
-
+	uint32_t pwm = 0;
+	uint32_t pwm_dir = 1;
 	int btn_pressed = 0;
 
 	// Infinite loop
@@ -70,13 +71,19 @@ int main(void)
 		// a time point that the delay will elapse and checks if HAL_GetTick() has passed that. But if adding delay to stopwatch
 		// causes an overflow, then HAL_GetTick() will immediately be greater than the finish time and cause a false positive in the
 		// comparison.
-		if (HAL_GetTick() - LEDstopwatch > 1000)
+		if (HAL_GetTick() - LEDstopwatch > 100)
 		{
 			// Toggle the LED
 			BSP_LED_Toggle(LED2);
 			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_10);
 			// Reset the stopwatch
 			LEDstopwatch = HAL_GetTick();
+			if (pwm < 1000) pwm_dir = 1;
+			if (pwm > 7000) pwm_dir = -1;
+			pwm += pwm_dir*1000;
+			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
+			sprintf(txbuff, "PWM period = %d \n\r", pwm);
+			HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
 		}
 
 		// Periodically transmit UART message
@@ -210,7 +217,7 @@ void TIM4_Init(void)
 	// TIM_Period = (timer_tick_frequency / PWM_frequency) - 1
 	// Assuming APB1 clock is running at 84MHZ, we have no prescaler. If this is true then we are targeting 10khz
 	// TIM_Period = 84000000 / 10000 - 1 = 8399
-	htim4.Init.Period = 7999;
+	htim4.Init.Period = PWM_PERIOD;
 	htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	// Timer base is set in here:
 	if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -315,6 +322,7 @@ void SystemClock_Config(void)
 
   /* SysTick_IRQn interrupt configuration */
   //HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+
 }
 
 
