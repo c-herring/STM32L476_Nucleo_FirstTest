@@ -76,12 +76,13 @@ void GPIO_Init(void)
 	// Enable GPIO clocks
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
 
 	// Initialize the on-board LED (On GPIOA Pin5)
-	BSP_LED_Init(LED2);
+	//BSP_LED_Init(LED2);
 
 	// Set the on-board user button as a GPIO input
-	BSP_PB_Init(BUTTON_USER, BUTTON_MODE_GPIO);
+	//BSP_PB_Init(BUTTON_USER, BUTTON_MODE_GPIO);
 
 	// Set the PC0 Pin as a gpio input. This is our breadboard GPIO button
 	GPIO_InitTypeDef gpioinitstruct = {0};

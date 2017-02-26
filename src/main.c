@@ -17,7 +17,7 @@
 // -------- Stuff that can be moved to header file later --------
 
 // Default LED flashing speed
-#define CORE_LED_DELAY 500
+#define CORE_LED_DELAY 1000
 // UART transmit rate
 #define UART_TRANSMIT_RATE 1000
 
@@ -26,13 +26,20 @@ volatile int multiplier = 1;
 
 void TIM4_Init(void);
 
+void SystemClock_Config(void);
+void GPIO_Init(void);
+
 // -------- END OF WOULD - BE HEADER --------
 
 int main(void)
 {
+
 	// Init the HAL
+
 	HAL_Init();
 
+	SystemClock_Config();
+	//HAL_RCC_DeInit();
 	// Init the GPIO
 	GPIO_Init();
 
@@ -63,7 +70,7 @@ int main(void)
 		// a time point that the delay will elapse and checks if HAL_GetTick() has passed that. But if adding delay to stopwatch
 		// causes an overflow, then HAL_GetTick() will immediately be greater than the finish time and cause a false positive in the
 		// comparison.
-		if (HAL_GetTick() - LEDstopwatch > LED_Delay*multiplier)
+		if (HAL_GetTick() - LEDstopwatch > 1000)
 		{
 			// Toggle the LED
 			BSP_LED_Toggle(LED2);
@@ -80,7 +87,7 @@ int main(void)
 			UART2stopwatch = HAL_GetTick();
 
 		}
-
+/*
 		// Check if the user button is pressed, if it is then change the led flashing speed
 		if (BSP_PB_GetState(BUTTON_USER) == 0)
 		{
@@ -102,7 +109,7 @@ int main(void)
 		} else {
 			btn_pressed = 0;
 		}
-
+*/
 
 	}
 }
@@ -172,7 +179,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	//uint8_t M1_encAPin =
 	sprintf(txbuff, "Saw an interrupt in EXTI Callback..GPIOA_%d\n\r", GPIO_Pin);
-	multiplier = 2;
+	//multiplier = 2;
+	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
+	sprintf(txbuff, "System core clock = %d Hz\n\r", SystemCoreClock);
+	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
+
+	RCC_ClkInitTypeDef RCC_ClkInitStruct;
+	uint32_t pfLatecy;
+	HAL_RCC_GetClockConfig(&RCC_ClkInitStruct, &pfLatecy);
+	sprintf(txbuff, "Clock Type = %lx\n\rSYSCLK Src = %lx\n\rAHB Div = %lx\n\rAPB1 Div = %lx\n\rAPB2 Div = %lx\n\r", RCC_ClkInitStruct.ClockType, RCC_ClkInitStruct.SYSCLKSource, RCC_ClkInitStruct.AHBCLKDivider, RCC_ClkInitStruct.APB1CLKDivider, RCC_ClkInitStruct.APB2CLKDivider);
+	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
+	sprintf(txbuff, "(clk src: RCC_CFGR_SW_MSI = %lx\tRCC_CFGR_SW_HSI = %lx\tRCC_CFGR_SW_HSE = %lx\tRCC_CFGR_SW_PLL = %lx\n\rRCC_CFGR_HPRE_DIV1 = %lx\tRCC_CFGR_HPRE_DIV8 = %lx\n\r", RCC_CFGR_SW_MSI, RCC_CFGR_SW_HSI, RCC_CFGR_SW_HSE, RCC_CFGR_SW_PLL, RCC_CFGR_HPRE_DIV1, RCC_CFGR_HPRE_DIV8);
 	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
 }
 
@@ -193,7 +210,7 @@ void TIM4_Init(void)
 	// TIM_Period = (timer_tick_frequency / PWM_frequency) - 1
 	// Assuming APB1 clock is running at 84MHZ, we have no prescaler. If this is true then we are targeting 10khz
 	// TIM_Period = 84000000 / 10000 - 1 = 8399
-	htim4.Init.Period = 8399;
+	htim4.Init.Period = 7999;
 	htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	// Timer base is set in here:
 	if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -215,7 +232,7 @@ void TIM4_Init(void)
 
 	// TODO: What does all this do?!
 	sConfigOC.OCMode = TIM_OCMODE_PWM1;
-	sConfigOC.Pulse = 4000;
+	sConfigOC.Pulse = 2000;
 	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
 	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
 	if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
@@ -234,9 +251,71 @@ void TIM4_Init(void)
 }
 
 
+/** System Clock Configuration
+*/
+void SystemClock_Config(void)
+{
 
+  RCC_OscInitTypeDef RCC_OscInitStruct;
+  RCC_ClkInitTypeDef RCC_ClkInitStruct;
+  RCC_PeriphCLKInitTypeDef PeriphClkInit;
 
+    /**Initializes the CPU, AHB and APB busses clocks
+    */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = 16;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 10;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    //Error_Handler();
+  }
 
+    /**Initializes the CPU, AHB and APB busses clocks
+    */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2;
+  PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+
+    /**Configure the main internal regulator output voltage
+    */
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+
+    /**Configure the Systick interrupt time
+    */
+  //HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+
+    /**Configure the Systick
+    */
+  //HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+
+  /* SysTick_IRQn interrupt configuration */
+  //HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+}
 
 
 
