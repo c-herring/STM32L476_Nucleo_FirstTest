@@ -82,8 +82,8 @@ int main(void)
 			if (pwm > 7000) pwm_dir = -1;
 			pwm += pwm_dir*1000;
 			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
-			sprintf(txbuff, "PWM period = %d \n\r", pwm);
-			HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
+			//sprintf(txbuff, "PWM period = %d \n\r", pwm);
+			//HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
 		}
 
 		// Periodically transmit UART message
