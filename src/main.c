@@ -29,6 +29,8 @@ void TIM4_Init(void);
 void SystemClock_Config(void);
 void GPIO_Init(void);
 
+char somebuff[50];
+
 // -------- END OF WOULD - BE HEADER --------
 
 int main(void)
@@ -60,9 +62,18 @@ int main(void)
 	uint32_t pwm_dir = 1;
 	int btn_pressed = 0;
 
+	rxbuff[0] = '\0';
 	// Infinite loop
 	for(;;)
 	{
+
+		HAL_UART_Receive_IT(&huart2, rxbuff, 10);
+		if (strlen(somebuff) > 0)
+		{
+			HAL_UART_Transmit_IT(&huart2, somebuff, strlen(rxbuff));
+			somebuff[0] = '\0';
+		}
+
 		// If more than the delay has elapsed, toggle the LED.
 		// Note that this is an overflow safe delay check. If HAL_GetTick() rolls over during the delay, then the
 		// subtraction of stopwatch will underflow and wrap back around. This essentially calculates the elapsed time
@@ -326,7 +337,11 @@ void SystemClock_Config(void)
 }
 
 
-
+void parseCommand(uint8_t ch)
+{
+	sprintf(somebuff, "saw: %c \n\r", ch);
+	//HAL_UART_Transmit_IT(&huart2, txbuff, strlen(rxbuff));
+}
 
 
 

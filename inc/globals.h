@@ -17,9 +17,11 @@ TIM_HandleTypeDef htim4;
 
 // Allocate space for a transmit buffer
 char txbuff[500];
+char rxbuff[50];
 
 // Function Declarations
 void USART2_UART_Init(void);
+void parseCommand(uint8_t ch);
 
 
 #endif

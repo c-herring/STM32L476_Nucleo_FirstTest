@@ -101,6 +101,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
+#include "globals.h"
 
 /** @addtogroup STM32L4xx_HAL_Driver
   * @{
@@ -2738,6 +2739,11 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
     else
     {
       *huart->pRxBuffPtr++ = (uint8_t)(uhdata & (uint8_t)uhMask);
+    }
+
+    if (*huart->pRxBuffPtr == 'a' | *huart->pRxBuffPtr == 'b')
+    {
+  	  parseCommand(*huart->pRxBuffPtr);
     }
 
     if(--huart->RxXferCount == 0)
