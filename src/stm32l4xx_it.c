@@ -90,3 +90,12 @@ void EXTI15_10_IRQHandler(void)
 	HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
 	HAL_NVIC_ClearPendingIRQ(EXTI4_IRQn);*/
 }
+
+
+
+void DMA1_Channel6_IRQHandler(void)
+{
+    HAL_NVIC_ClearPendingIRQ(DMA1_Channel6_IRQn);
+    rxB2 = 'a';
+    HAL_DMA_IRQHandler(&hdma_usart2_rx);
+}

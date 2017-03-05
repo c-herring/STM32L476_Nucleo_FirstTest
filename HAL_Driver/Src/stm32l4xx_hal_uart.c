@@ -2741,11 +2741,6 @@ static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
       *huart->pRxBuffPtr++ = (uint8_t)(uhdata & (uint8_t)uhMask);
     }
 
-    if (*huart->pRxBuffPtr == 'a' | *huart->pRxBuffPtr == 'b')
-    {
-  	  parseCommand(*huart->pRxBuffPtr);
-    }
-
     if(--huart->RxXferCount == 0)
     {
       /* Disable the UART Parity Error Interrupt and RXNE interrupt*/

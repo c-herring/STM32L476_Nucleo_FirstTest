@@ -148,6 +148,9 @@ void USART2_UART_Init(void)
 	huart2.Init.Mode = UART_MODE_TX_RX;
 	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
 	HAL_UART_Init(&huart2);
+
+
+
 }
 
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim_pwm)
@@ -159,5 +162,3 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* htim_pwm)
 		__HAL_RCC_TIM4_CLK_ENABLE();
 	}
 }
-
-

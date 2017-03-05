@@ -31,6 +31,8 @@ void GPIO_Init(void);
 
 char somebuff[50];
 
+
+
 // -------- END OF WOULD - BE HEADER --------
 
 int main(void)
@@ -53,6 +55,13 @@ int main(void)
 	// Start the PWM
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 
+	// Start the uart2 DMA2 circular RX buffer
+	rxB = 'o';
+	rxB2 = '_';
+	rxB3 = '_';
+	__HAL_UART_FLUSH_DRREGISTER(&huart2); // First flush buffer to prevent an overrun.
+
+
 	// Delay to flash LED
 	uint32_t LED_Delay = CORE_LED_DELAY; //ms
 	// Start the stopwatch
@@ -63,16 +72,20 @@ int main(void)
 	int btn_pressed = 0;
 
 	rxbuff[0] = '\0';
+	cmdbuff[0] = '\0';
+	cmdBuffIndex = 0;
+	executeCmd = 0;
+	HAL_UART_Receive_DMA(&huart2, &rxB, 1);
 	// Infinite loop
 	for(;;)
 	{
 
-		HAL_UART_Receive_IT(&huart2, rxbuff, 10);
-		if (strlen(somebuff) > 0)
-		{
-			HAL_UART_Transmit_IT(&huart2, somebuff, strlen(rxbuff));
-			somebuff[0] = '\0';
-		}
+		//HAL_UART_Receive_IT(&huart2, rxbuff, 10);
+		//if (strlen(somebuff) > 0)
+		//{
+		//	HAL_UART_Transmit_IT(&huart2, somebuff, strlen(rxbuff));
+		//	somebuff[0] = '\0';
+		//}
 
 		// If more than the delay has elapsed, toggle the LED.
 		// Note that this is an overflow safe delay check. If HAL_GetTick() rolls over during the delay, then the
@@ -93,8 +106,8 @@ int main(void)
 			if (pwm > 7000) pwm_dir = -1;
 			pwm += pwm_dir*1000;
 			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
-			//sprintf(txbuff, "PWM period = %d \n\r", pwm);
-			//HAL_UART_Transmit(&huart2, (uint8_t*)txbuff, strlen(txbuff), 0xFFFF);
+			sprintf(txbuff, "%c%c%c..PWM period = %d \n\r", rxB, rxB2, rxB3, pwm);
+			HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 		}
 
 		// Periodically transmit UART message
@@ -166,6 +179,28 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
 		HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(USART2_IRQn);
+
+
+		// Get the DMA2 clock chooching
+		__HAL_RCC_DMA1_CLK_ENABLE();
+
+		// Set up DMA
+		hdma_usart2_rx.Instance = DMA1_Channel6;
+		hdma_usart2_rx.Init.Request = DMA_REQUEST_2;
+		hdma_usart2_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;// The direction id from peripheral to memory.
+		hdma_usart2_rx.Init.PeriphInc = DMA_PINC_ENABLE; // Do not increment the peripheral memory.
+		hdma_usart2_rx.Init.MemInc = DMA_MINC_DISABLE; // Do not increment the memory address.
+		hdma_usart2_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE; // DMA peripheral data size only needs to be one byte
+		hdma_usart2_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE; // As does the memory
+		hdma_usart2_rx.Init.Mode = 	DMA_CIRCULAR; // Circular will reload DMA_SxNDTR register after each transfer (DMA_SxNDTR is number of remaining data to be transfered)
+		hdma_usart2_rx.Init.Priority = 	DMA_PRIORITY_LOW; // Low priority
+		HAL_DMA_Init(&hdma_usart2_rx);
+
+		__HAL_LINKDMA(huart, hdmarx, hdma_usart2_rx);
+
+		// Enable DMA interrupt
+		HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, UART_PRIORITY, UART_RX_SUBPRIORITY);
+		HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 	}
 }
 
@@ -343,8 +378,36 @@ void parseCommand(uint8_t ch)
 	//HAL_UART_Transmit_IT(&huart2, txbuff, strlen(rxbuff));
 }
 
+// DMA RX callback for UART
+void HAL_UART_RxCptlCallback(UART_HandleTypeDef *huart)
+{
+	__HAL_UART_FLUSH_DRREGISTER(&huart2); // Clear the buffer to prevent overrun
 
+	rxB3 = '!';
+	//sprintf(somebuff, "saw: %c \n\r", rxB);
+	//HAL_UART_Transmit_IT(&huart2, somebuff, strlen(somebuff));
 
+}
+
+// DMA RX callback for UART
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
+{
+	__HAL_UART_FLUSH_DRREGISTER(&huart2); // Clear the buffer to prevent overrun
+
+	if (rxB == 'a' | cmdBuffIndex > MAX_CMD_BUFFER_LEN-2)
+	{
+		cmdbuff[cmdBuffIndex] = '\0';
+		cmdBuffIndex = 0;
+		sprintf(txbuff, "cmd = %s\n", cmdbuff);
+		HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
+	} else
+	{
+		cmdbuff[cmdBuffIndex++] = rxB;
+	}
+	//sprintf(somebuff, "saw: %c \n\r", rxB);
+	//HAL_UART_Transmit_IT(&huart2, somebuff, strlen(somebuff));
+
+}
 
 
 
