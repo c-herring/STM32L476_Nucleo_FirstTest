@@ -2,6 +2,10 @@
 #ifndef __MY_GLOBALS_H
 #define __MY_GLOBALS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 // Pin and port for encoder signals. Note these are handled in the 10-15 ISR, so must be pins 10-15
 #define Encoder1_A_Port	GPIOA
@@ -25,21 +29,28 @@ TIM_HandleTypeDef htim4;
 #define MAX_RX_BUFFER_LEN 50
 #define MAX_CMD_BUFFER_LEN 50
 // Allocate space for a transmit buffer
-uint8_t txbuff[MAX_TX_BUFFER_LEN];
+char txbuff[MAX_TX_BUFFER_LEN];
 // Allocate space for the receive buffer
-uint8_t rxbuff[MAX_RX_BUFFER_LEN];
-// Allocate space for cpmpiling a command string buffer
-uint8_t cmdbuff[MAX_CMD_BUFFER_LEN];
-uint32_t cmdBuffIndex;
-uint8_t executeCmd;
+char rxbuff[MAX_RX_BUFFER_LEN];
+// Allocate space for compiling a command string buffer
+char cmdbuff[MAX_CMD_BUFFER_LEN];
+int32_t cmdBuffIndex;
+char executeCmd;
 // Create the single byte rx buffer for circular DMA buffer generation
-volatile uint8_t rxB;
-volatile uint8_t rxB2;
-volatile uint8_t rxB3;
+uint8_t rxB;
+volatile char rxB2;
+volatile char rxB3;
 
 // Function Declarations
 void USART2_UART_Init(void);
-void parseCommand(uint8_t ch);
+void parseCommand(uint8_t *buff);
+void TIM4_Init(void);
+void SystemClock_Config(void);
+void GPIO_Init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
