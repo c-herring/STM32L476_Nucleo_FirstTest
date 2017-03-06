@@ -32,8 +32,6 @@ void GPIO_Init(void);
 
 char somebuff[50];
 
-#define PWM_INCREMENT 100
-uint32_t pwm;
 
 
 // -------- END OF WOULD - BE HEADER --------
@@ -73,7 +71,7 @@ int main(void)
 	// Start the stopwatch
 	uint32_t LEDstopwatch = HAL_GetTick();
 	uint32_t UART2stopwatch = HAL_GetTick();
-	pwm = 0;
+	uint32_t pwm = 0;
 	uint32_t pwm_dir = 1;
 	int btn_pressed = 0;
 
@@ -108,9 +106,9 @@ int main(void)
 			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_10);
 			// Reset the stopwatch
 			LEDstopwatch = HAL_GetTick();
-			//if (pwm < 1000) pwm_dir = 1;
-			//if (pwm > 7000) pwm_dir = -1;
-			//pwm += pwm_dir*1000;
+			if (pwm < 1000) pwm_dir = 1;
+			if (pwm > 7000) pwm_dir = -1;
+			pwm += pwm_dir*1000;
 			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
 			sprintf(txbuff, "%c%c%c..PWM period = %d \n\r", rxB, rxB2, rxB3, pwm);
 			HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
@@ -263,7 +261,7 @@ void TIM4_Init(void)
 
 	// First init the timer. The RCC cloxk for timer 4 is done inside the HAL_TIM_PWM_MspInit callback. Why can't we just do that here?
 	htim4.Instance = TIM4;
-	htim4.Init.Prescaler = 10; //TODO timer_tick_frequency = Timer_default_frequency / (prescaller_set + 1)
+	htim4.Init.Prescaler = 0; //TODO timer_tick_frequency = Timer_default_frequency / (prescaller_set + 1)
 	htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
 	// PWM_frequency = timer_tick_frequency / (TIM_Period + 1)
 	// TIM_Period = (timer_tick_frequency / PWM_frequency) - 1
@@ -378,9 +376,9 @@ void SystemClock_Config(void)
 }
 
 
-void parseCommand(uint8_t *buf)
+void parseCommand(uint8_t ch)
 {
-	//sprintf(somebuff, "saw: %c \n\r", ch);
+	sprintf(somebuff, "saw: %c \n\r", ch);
 	//HAL_UART_Transmit_IT(&huart2, txbuff, strlen(rxbuff));
 }
 
@@ -400,9 +398,8 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {
 	__HAL_UART_FLUSH_DRREGISTER(&huart2); // Clear the buffer to prevent overrun
 
-	if (rxB == '\r' | cmdBuffIndex > MAX_CMD_BUFFER_LEN-2)
+	if (rxB == 'a' | cmdBuffIndex > MAX_CMD_BUFFER_LEN-2)
 	{
-		parseCommand(cmdbuff);
 		cmdbuff[cmdBuffIndex] = '\0';
 		cmdBuffIndex = 0;
 		sprintf(txbuff, "cmd = %s\n", cmdbuff);
@@ -411,8 +408,6 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 	{
 		cmdbuff[cmdBuffIndex++] = rxB;
 	}
-	if (rxB == 'u') pwm += PWM_INCREMENT;
-	if (rxB == 'd') pwm -= PWM_INCREMENT;
 	//sprintf(somebuff, "saw: %c \n\r", rxB);
 	//HAL_UART_Transmit_IT(&huart2, somebuff, strlen(somebuff));
 
