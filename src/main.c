@@ -13,6 +13,7 @@
 #include "stm32l4xx_nucleo.h"
 #include <string.h>
 #include "globals.h"
+#include "PIDMotor.h"
 
 // -------- Stuff that can be moved to header file later --------
 
@@ -62,6 +63,9 @@ int main(void)
 	rxB2 = '_';
 	rxB3 = '_';
 	__HAL_UART_FLUSH_DRREGISTER(&huart2); // First flush buffer to prevent an overrun.
+
+	// Create a motor object
+	PIDMotor motorA;
 
 
 	// Delay to flash LED
