@@ -1,14 +1,17 @@
-/* Define to prevent recursive inclusion -------------------------------------*/
+/*
+ * globalsp.hpp
+ *
+ *  Created on: Mar 9, 2017
+ *      Author: HeZ
+ */
 
 
-#ifndef __MY_GLOBALS_H
-#define __MY_GLOBALS_H
+#include "PIDMotor.h"
 
+#ifndef GLOBALSP_HPP_
+#define GLOBALSP_HPP_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+extern PIDMotor MotorA;
 
 
 // Pin and port for encoder signals. Note these are handled in the 10-15 ISR, so must be pins 10-15
@@ -54,9 +57,5 @@ void TIM4_Init(void);
 void SystemClock_Config(void);
 void GPIO_Init(void);
 
-#ifdef __cplusplus
-}
-#endif
 
-
-#endif
+#endif /* GLOBALSP_HPP_ */

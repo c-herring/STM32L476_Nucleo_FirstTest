@@ -11,12 +11,17 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx.h"
-#include "globals.h"
+
 #include <string.h>
 #ifdef USE_RTOS_SYSTICK
 #include <cmsis_os.h>
 #endif
+
+#include "globals.h"
 #include "stm32l4xx_it.h"
+
+
+
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
