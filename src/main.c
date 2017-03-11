@@ -13,12 +13,9 @@
 #include "stm32l4xx.h"
 #include "stm32l4xx_nucleo.h"
 #include <string.h>
-#include "PIDMotor.h"
 #include "globals.h"
+#include "PIDMotor.h"
 
-
-// Create a global motor object
-PIDMotor *motorA;
 // -------- Stuff that can be moved to header file later --------
 
 // Default LED flashing speed
@@ -62,14 +59,6 @@ int main(void)
 	__HAL_UART_FLUSH_DRREGISTER(&huart2); // First flush buffer to prevent an overrun.
 
 
-	// PID Setup
-	PIDMotor::PID_Params PID_MotorA;
-	PID_MotorA.Kp = 10;
-	PID_MotorA.Ki = 0;
-	PID_MotorA.Kd = 0;
-	PID_MotorA.PWM_MAX = PWM_PERIOD;
-
-	motorA = new PIDMotor(PID_MotorA, &htim4, TIM_CHANNEL_1);
 
 	// Delay to flash LED
 	uint32_t LED_Delay = CORE_LED_DELAY; //ms
@@ -104,7 +93,7 @@ int main(void)
 		// a time point that the delay will elapse and checks if HAL_GetTick() has passed that. But if adding delay to stopwatch
 		// causes an overflow, then HAL_GetTick() will immediately be greater than the finish time and cause a false positive in the
 		// comparison.
-		if (HAL_GetTick() - LEDstopwatch > 100)
+		if (HAL_GetTick() - LEDstopwatch > 500)
 		{
 			// Toggle the LED
 			BSP_LED_Toggle(LED2);
