@@ -29,6 +29,8 @@ void Motor_Init(PIDMotor_TypeDef *motor, PIDParams_TypeDef _pid_params, uint32_t
 	motor->lastEncPos = 0;
 	motor->vel = 0.0f;
 	motor->velSet = 0.0f;
+	motor->pid.processParam = 0.0f;
+	motor->pid.rawOut = 0.0f;
 }
 
 // Initialise the PID strucutre
@@ -41,7 +43,44 @@ void PID_Init(PIDControl_TypeDef *pid, PIDParams_TypeDef _pid_params)
 }
 
 // Compute PID
-extern uint32_t PID_Computer(PIDMotor_TypeDef *motor)
+extern void PID_Compute(PIDMotor_TypeDef *motor)
 {
-	motor->vel = (float) (motor->encPos - motor->lastEncPos)
+	// Current velocity
+	motor->vel = (float) (motor->encPos - motor->lastEncPos)/motor->pid.pidRate;
+
+	// Calc the error
+	motor->pid.error = motor->velSet - motor->vel;
+
+	motor->pid.processParam = motor->pid.params.Kp*motor->pid.error + motor->pid.params.Kd*(motor->pid.error - motor->pid.prev_error) + motor->pid.params.Ki*motor->pid.Ierror;
+
+	// Save last error
+	motor->pid.prev_error =  motor->pid.error;
+
+	motor->pid.rawOut += motor->pid.processParam;
+
+	motor->pid.Ierror += motor->pid.error;
+	if (motor->pid.Ierror > motor->pid.Ierror_limit) motor->pid.Ierror = motor->pid.Ierror_limit;
+	if (motor->pid.Ierror < -motor->pid.Ierror_limit) motor->pid.Ierror = -motor->pid.Ierror_limit;
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
