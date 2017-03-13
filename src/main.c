@@ -59,8 +59,13 @@ int main(void)
 	__HAL_UART_FLUSH_DRREGISTER(&huart2); // First flush buffer to prevent an overrun.
 
 	// Create the PID moor structs
-	PIDParams_TypeDef morowA_params
+	PIDParams_TypeDef motorA_params;
+	motorA_params.Kp = 10.0f;
+	motorA_params.Ki = 0.0f;
+	motorA_params.Kd = 0.0f;
 
+	PIDMotor_TypeDef MotorA;
+	Motor_Init(&MotorA, motorA_params, PID_TD, PWM_PERIOD, 5000.0);
 
 	// Delay to flash LED
 	uint32_t LED_Delay = CORE_LED_DELAY; //ms

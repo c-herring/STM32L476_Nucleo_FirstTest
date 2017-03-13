@@ -27,7 +27,9 @@ typedef struct {
 	float prev_error;
 	float Ierror;
 	float Ierror_limit;
-	uint32_t pidRate; // µs
+	uint32_t pidRate; // ï¿½s
+	float outLim;
+	uint32_t out;
 
 } PIDControl_TypeDef;
 
@@ -41,14 +43,18 @@ typedef struct {
 	float velSet; // Velocity set point
 
 
+
 }PIDMotor_TypeDef;
 
 
 // Initialise the motor
-extern void Motor_Init(PIDMotor_TypeDef *motor, PIDParams_TypeDef _pid_params, uint32_t _pidRate);
+extern void Motor_Init(PIDMotor_TypeDef *motor, PIDParams_TypeDef _pid_params, uint32_t _pidRate,  uint32_t pwmPeriod, float _Ierror_lim);
 
 // Initialise a pid struct
-extern void PID_Init(PIDControl_TypeDef *pid, PIDParams_TypeDef _pid_params, uint32_t _pidRate);
+extern void PID_Init(PIDControl_TypeDef *pid, PIDParams_TypeDef _pid_params);
+
+// Computer this PID loop
+extern uint32_t PID_Computer(PIDMotor_TypeDef *motor);
 
 #ifdef __cplusplus
 }

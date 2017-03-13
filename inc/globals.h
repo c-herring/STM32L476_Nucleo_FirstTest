@@ -1,6 +1,6 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 
-#include "PIDMorors.h"
+#include "PIDMotor.h"
 #ifndef __MY_GLOBALS_H
 #define __MY_GLOBALS_H
 
@@ -45,7 +45,8 @@ uint8_t rxB;
 volatile char rxB2;
 volatile char rxB3;
 
-
+extern PIDMotor_TypeDef MotorA;
+#define PID_TD 50 // ms PID loop time
 
 // Function Declarations
 void USART2_UART_Init(void);
