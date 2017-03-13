@@ -58,6 +58,8 @@ int main(void)
 	rxB3 = '_';
 	__HAL_UART_FLUSH_DRREGISTER(&huart2); // First flush buffer to prevent an overrun.
 
+	// Create the PID moor structs
+	PIDParams_TypeDef morowA_params
 
 
 	// Delay to flash LED
