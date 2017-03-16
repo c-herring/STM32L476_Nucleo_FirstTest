@@ -44,9 +44,10 @@ char executeCmd;
 uint8_t rxB;
 volatile char rxB2;
 volatile char rxB3;
+uint32_t pwm;
 
-extern PIDMotor_TypeDef MotorA;
-#define PID_TD 50 // ms PID loop time
+PIDMotor_TypeDef MotorA;
+#define PID_TD 500 // ms PID loop time
 
 // Function Declarations
 void USART2_UART_Init(void);

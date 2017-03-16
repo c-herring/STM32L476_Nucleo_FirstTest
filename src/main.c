@@ -64,15 +64,17 @@ int main(void)
 	motorA_params.Ki = 0.0f;
 	motorA_params.Kd = 0.0f;
 
-	PIDMotor_TypeDef MotorA;
+	//PIDMotor_TypeDef MotorA;
 	Motor_Init(&MotorA, motorA_params, PID_TD, PWM_PERIOD, 5000.0);
+
+	uint32_t PIDStopwatch = HAL_GetTick();
 
 	// Delay to flash LED
 	uint32_t LED_Delay = CORE_LED_DELAY; //ms
 	// Start the stopwatch
 	uint32_t LEDstopwatch = HAL_GetTick();
 	uint32_t UART2stopwatch = HAL_GetTick();
-	uint32_t pwm = 0;
+	pwm = 0;
 	uint32_t pwm_dir = 1;
 	int btn_pressed = 0;
 
@@ -100,18 +102,18 @@ int main(void)
 		// a time point that the delay will elapse and checks if HAL_GetTick() has passed that. But if adding delay to stopwatch
 		// causes an overflow, then HAL_GetTick() will immediately be greater than the finish time and cause a false positive in the
 		// comparison.
-		if (HAL_GetTick() - LEDstopwatch > 500)
+		if (HAL_GetTick() - LEDstopwatch > 100)
 		{
 			// Toggle the LED
 			BSP_LED_Toggle(LED2);
 			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_10);
 			// Reset the stopwatch
 			LEDstopwatch = HAL_GetTick();
-			if (pwm < 1000) pwm_dir = 1;
-			if (pwm > 7000) pwm_dir = -1;
-			pwm += pwm_dir*1000;
-			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
-			sprintf(txbuff, "%c%c%c..PWM period = %d \n\r", rxB, rxB2, rxB3, pwm);
+			//if (pwm < 1000) pwm_dir = 1;
+			//if (pwm > 7000) pwm_dir = -1;
+			//pwm += pwm_dir*1000;
+			//__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
+			sprintf(txbuff, "%c%c%c..PWM = %d\tenc = %d\tvel = %f \n\r", rxB, rxB2, rxB3, pwm, MotorA.encPos, MotorA.vel);
 			HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 		}
 
@@ -122,6 +124,15 @@ int main(void)
 			//HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 			UART2stopwatch = HAL_GetTick();
 
+		}
+
+		// Periodically compute PID
+		if (HAL_GetTick() - PIDStopwatch > PID_TD)
+		{
+			PID_Compute(&MotorA);
+			//sprintf(txbuff, "%c%c%c..PWM = %d\tenc = %d\tvel = %f \n\r", rxB, rxB2, rxB3, pwm, MotorA.encPos, MotorA.vel);
+			//HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
+			PIDStopwatch = HAL_GetTick();
 		}
 /*
 		// Check if the user button is pressed, if it is then change the led flashing speed
@@ -306,6 +317,8 @@ void TIM4_Init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, 0);
 }
 
 
@@ -399,6 +412,16 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {
 	__HAL_UART_FLUSH_DRREGISTER(&huart2); // Clear the buffer to prevent overrun
 
+	if (rxB == 'u')
+	{
+		pwm += 100;
+		__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
+	}
+	if (rxB == 'd')
+	{
+		pwm -= 100;
+		__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
+	}
 	if (rxB == 'a' | cmdBuffIndex > MAX_CMD_BUFFER_LEN-2)
 	{
 		cmdbuff[cmdBuffIndex] = '\0';

@@ -13,6 +13,7 @@ extern "C" {
 #endif
 
 #include "stdint.h"
+#include "stm32l4xx.h"
 
 typedef struct {
 	float Kp;

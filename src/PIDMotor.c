@@ -46,8 +46,8 @@ void PID_Init(PIDControl_TypeDef *pid, PIDParams_TypeDef _pid_params)
 extern void PID_Compute(PIDMotor_TypeDef *motor)
 {
 	// Current velocity
-	motor->vel = (float) (motor->encPos - motor->lastEncPos)/motor->pid.pidRate;
-
+	motor->vel = (float)(motor->encPos - motor->lastEncPos)/motor->pid.pidRate*1000;
+	motor->lastEncPos = motor->encPos;
 	// Calc the error
 	motor->pid.error = motor->velSet - motor->vel;
 

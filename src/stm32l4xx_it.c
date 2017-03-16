@@ -19,6 +19,7 @@
 
 #include "globals.h"
 #include "stm32l4xx_it.h"
+#include "PIDMotor.h"
 
 
 
@@ -82,10 +83,12 @@ void EXTI15_10_IRQHandler(void)
 	encA_val |= HAL_GPIO_ReadPin(Encoder1_A_Port, Encoder1_A_Pin) | HAL_GPIO_ReadPin(Encoder1_B_Port, Encoder1_B_Pin) << 1;
 	// Update encoder position
 	motorA_pos += lookup_table[encA_val & 0b1111];
+	//PIDMotor_TypeDef MotorA;
+	MotorA.encPos += lookup_table[encA_val & 0b1111];
 
 
-	sprintf(txbuff, "Interrupt pin state: %d(%lu)\t%d(%lu)\tEncoder = %d\n\r", HAL_GPIO_ReadPin(Encoder1_A_Port, Encoder1_A_Pin), trig1, HAL_GPIO_ReadPin(Encoder1_B_Port, Encoder1_B_Pin), trig2, motorA_pos);
-	HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
+	//sprintf(txbuff, "Interrupt pin state: %d(%lu)\t%d(%lu)\tEncoder = %d\n\r", HAL_GPIO_ReadPin(Encoder1_A_Port, Encoder1_A_Pin), trig1, HAL_GPIO_ReadPin(Encoder1_B_Port, Encoder1_B_Pin), trig2, motorA_pos);
+	//HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 
 	trig1 = 0;
 	trig2 = 0;
