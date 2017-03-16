@@ -59,6 +59,10 @@ extern void PID_Init(PIDControl_TypeDef *pid, PIDParams_TypeDef _pid_params);
 // Computer this PID loop
 extern void PID_Compute(PIDMotor_TypeDef *motor);
 
+// Set the velocity (in encoder ticks per second)
+extern void Motor_Vel_Set(PIDMotor_TypeDef *motor, float vel);
+
+
 #ifdef __cplusplus
 }
 #endif

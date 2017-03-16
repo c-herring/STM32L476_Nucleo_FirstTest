@@ -57,6 +57,8 @@ extern void PID_Compute(PIDMotor_TypeDef *motor)
 	motor->pid.prev_error =  motor->pid.error;
 
 	motor->pid.rawOut += motor->pid.processParam;
+	if (motor->pid.rawOut > motor->pid.outLim) motor->pid.rawOut = motor->pid.outLim;
+	if (motor->pid.rawOut < 0) motor->pid.rawOut = 0;
 
 	motor->pid.Ierror += motor->pid.error;
 	if (motor->pid.Ierror > motor->pid.Ierror_limit) motor->pid.Ierror = motor->pid.Ierror_limit;
@@ -66,8 +68,10 @@ extern void PID_Compute(PIDMotor_TypeDef *motor)
 
 }
 
-
-
+extern void Motor_Vel_Set(PIDMotor_TypeDef *motor, float vel)
+{
+	motor->velSet = vel;
+}
 
 
 

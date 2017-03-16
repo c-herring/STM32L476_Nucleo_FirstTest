@@ -35,6 +35,8 @@ char somebuff[50];
 int main(void)
 {
 
+	velSet = 0;
+
 	// Init the HAL
 
 	HAL_Init();
@@ -60,8 +62,8 @@ int main(void)
 
 	// Create the PID moor structs
 	PIDParams_TypeDef motorA_params;
-	motorA_params.Kp = 10.0f;
-	motorA_params.Ki = 0.0f;
+	motorA_params.Kp = 0.15f;
+	motorA_params.Ki = 0.001f;
 	motorA_params.Kd = 0.0f;
 
 	//PIDMotor_TypeDef MotorA;
@@ -113,7 +115,7 @@ int main(void)
 			//if (pwm > 7000) pwm_dir = -1;
 			//pwm += pwm_dir*1000;
 			//__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
-			sprintf(txbuff, "%c%c%c..PWM = %d\tenc = %d\tvel = %f \n\r", rxB, rxB2, rxB3, pwm, MotorA.encPos, MotorA.vel);
+			sprintf(txbuff, "%c%c%c..PWM = %d\tvelSet = %0.2f\tenc = %d\tvel = %f\tRawOut = %f \n\r", rxB, rxB2, rxB3, pwm, velSet, MotorA.encPos, MotorA.vel, MotorA.pid.rawOut);
 			HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 		}
 
@@ -129,7 +131,9 @@ int main(void)
 		// Periodically compute PID
 		if (HAL_GetTick() - PIDStopwatch > PID_TD)
 		{
+			Motor_Vel_Set(&MotorA, velSet);
 			PID_Compute(&MotorA);
+			__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, (uint32_t) MotorA.pid.rawOut);
 			//sprintf(txbuff, "%c%c%c..PWM = %d\tenc = %d\tvel = %f \n\r", rxB, rxB2, rxB3, pwm, MotorA.encPos, MotorA.vel);
 			//HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 			PIDStopwatch = HAL_GetTick();
@@ -414,13 +418,15 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 
 	if (rxB == 'u')
 	{
+		velSet += 500;
 		pwm += 100;
-		__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
+		//__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
 	}
 	if (rxB == 'd')
 	{
+		velSet -= 500;
 		pwm -= 100;
-		__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
+		//__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
 	}
 	if (rxB == 'a' | cmdBuffIndex > MAX_CMD_BUFFER_LEN-2)
 	{
