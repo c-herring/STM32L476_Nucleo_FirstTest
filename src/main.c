@@ -394,9 +394,47 @@ void SystemClock_Config(void)
 }
 
 
-void parseCommand(uint8_t *buff)
+void parseCommand()
 {
-	sprintf(somebuff, "saw: %c \n\r", buff);
+	char invalidCmd = 0;
+	switch (cmdbuff[0])
+	{
+		// CMD is targeted towards motor A
+		case '1':
+			break;
+		// CMD is targeted towards motor B
+		case '2':
+			break;
+		// No Motor is specified, CMD is invalid
+		default:
+			invalidCmd = 1;
+	}
+	float tempfloat;
+	switch (cmdbuff[1])
+	{
+		case 'V':
+			// Set the velocity
+			if (sscanf(cmdbuff+2, "%f", &tempfloat) != EOF)
+			{
+				sprintf(txbuff, "I saw V = %f\n", tempfloat);
+				HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
+			}
+			break;
+		case 'v':
+			// Return the velocity
+			break;
+		// COmmand is not recognised
+		default:
+			invalidCmd = 1;
+	}
+
+	if (invalidCmd == 1)
+	{
+		sprintf(txbuff, "?%s\n", cmdbuff);
+		HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
+	}
+
+	//sprintf(somebuff, "saw: %c \n\r", buff);
 	//HAL_UART_Transmit_IT(&huart2, txbuff, strlen(rxbuff));
 }
 
@@ -428,7 +466,7 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 		pwm -= 100;
 		//__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_1, pwm);
 	}
-	if (rxB == 'a' | cmdBuffIndex > MAX_CMD_BUFFER_LEN-2)
+	if (rxB == '\r' | cmdBuffIndex > MAX_CMD_BUFFER_LEN-2)
 	{
 		cmdbuff[cmdBuffIndex] = '\0';
 		cmdBuffIndex = 0;

@@ -52,7 +52,7 @@ PIDMotor_TypeDef MotorA;
 
 // Function Declarations
 void USART2_UART_Init(void);
-void parseCommand(uint8_t *buff);
+void parseCommand();
 void TIM4_Init(void);
 void SystemClock_Config(void);
 void GPIO_Init(void);
