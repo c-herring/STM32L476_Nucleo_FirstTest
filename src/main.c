@@ -416,6 +416,7 @@ void parseCommand()
 			// Set the velocity
 			if (sscanf(cmdbuff+2, "%f", &tempfloat) != EOF)
 			{
+				velSet = tempfloat;
 				sprintf(txbuff, "I saw V = %f\n", tempfloat);
 				HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
 			}
@@ -470,8 +471,9 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 	{
 		cmdbuff[cmdBuffIndex] = '\0';
 		cmdBuffIndex = 0;
-		sprintf(txbuff, "cmd = %s\n", cmdbuff);
-		HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
+		//sprintf(txbuff, "cmd = %s\n", cmdbuff);
+		//HAL_UART_Transmit_IT(&huart2, (uint8_t*)txbuff, strlen(txbuff));
+		parseCommand();
 	} else
 	{
 		cmdbuff[cmdBuffIndex++] = rxB;
